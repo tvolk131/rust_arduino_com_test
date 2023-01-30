@@ -13,7 +13,7 @@ pub struct ArduinoCommandResponse {
 #[derive(std::fmt::Debug)]
 pub enum SerialError {
     Timeout,
-    MalformedResponse
+    MalformedResponse,
 }
 
 pub struct CallResponseSerialPort {
@@ -42,24 +42,22 @@ impl CallResponseSerialPort {
     fn get_commands(&mut self) -> Result<Vec<String>, SerialError> {
         let response = match self.execute_command("list_commands") {
             Ok(response) => response,
-            Err(err) => return Err(err)
+            Err(err) => return Err(err),
         };
 
         let raw_command_values = match &response.response {
-            Some(res) => {
-                match res.as_array() {
-                    Some(commands) => commands,
-                    None => return Err(SerialError::MalformedResponse)
-                }
+            Some(res) => match res.as_array() {
+                Some(commands) => commands,
+                None => return Err(SerialError::MalformedResponse),
             },
-            None => return Err(SerialError::MalformedResponse)
+            None => return Err(SerialError::MalformedResponse),
         };
 
         let mut command_strings = Vec::new();
         for raw_command_value in raw_command_values {
             match raw_command_value.as_str() {
                 Some(command_string) => command_strings.push(command_string.to_string()),
-                None => return Err(SerialError::MalformedResponse)
+                None => return Err(SerialError::MalformedResponse),
             };
         }
 
@@ -70,7 +68,10 @@ impl CallResponseSerialPort {
         &self.supported_commands
     }
 
-    pub fn execute_command(&mut self, command: &str) -> Result<ArduinoCommandResponse, SerialError> {
+    pub fn execute_command(
+        &mut self,
+        command: &str,
+    ) -> Result<ArduinoCommandResponse, SerialError> {
         for _ in 0..self.max_retries {
             if let Ok(response) = self.execute_command_give_up_after_timeout(command) {
                 return Ok(response);
@@ -124,7 +125,7 @@ impl CallResponseSerialPort {
                 for line in stringified_buffer.split("\n").map(|line| line.trim()) {
                     return match serde_json::from_str::<ArduinoCommandResponse>(line) {
                         Ok(response) => Ok(response),
-                        Err(_) => Err(SerialError::MalformedResponse)
+                        Err(_) => Err(SerialError::MalformedResponse),
                     };
                 }
             }
