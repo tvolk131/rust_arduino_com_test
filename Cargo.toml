@@ -1,5 +1,5 @@
 [package]
-name = "rust_com_test"
+name = "rust_arduino_com_test"
 version = "0.1.0"
 edition = "2021"
 
