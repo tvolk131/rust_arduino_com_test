@@ -6,7 +6,7 @@ use std::time::Duration;
 #[derive(serde::Deserialize, Debug)]
 pub struct ArduinoCommandResponse {
     status: String,
-    command: Option<String>,
+    command: String,
     response: Option<serde_json::Value>,
 }
 
@@ -14,6 +14,7 @@ pub struct ArduinoCommandResponse {
 pub enum SerialError {
     Timeout,
     MalformedResponse,
+    NonOkStatus,
 }
 
 pub struct CallResponseSerialPort {
@@ -99,10 +100,10 @@ impl CallResponseSerialPort {
             self.port.flush().unwrap();
             std::thread::sleep(Duration::from_millis(1));
         }
-        self.wait_for_input()
+        self.wait_for_input(command)
     }
 
-    fn wait_for_input(&mut self) -> Result<ArduinoCommandResponse, SerialError> {
+    fn wait_for_input(&mut self, command: &str) -> Result<ArduinoCommandResponse, SerialError> {
         let start_time = std::time::Instant::now();
         let mut buffer = [0; 10000];
         let mut stringified_buffer = String::new();
@@ -123,9 +124,17 @@ impl CallResponseSerialPort {
             }
             if stringified_buffer.ends_with("\n") {
                 for line in stringified_buffer.split("\n").map(|line| line.trim()) {
-                    return match serde_json::from_str::<ArduinoCommandResponse>(line) {
-                        Ok(response) => Ok(response),
-                        Err(_) => Err(SerialError::MalformedResponse),
+                    match serde_json::from_str::<ArduinoCommandResponse>(line) {
+                        Ok(response) => {
+                            if response.status != "ok" {
+                                return Err(SerialError::NonOkStatus);
+                            }
+
+                            if response.command == command {
+                                return Ok(response)
+                            }
+                        },
+                        Err(_) => return Err(SerialError::MalformedResponse),
                     };
                 }
             }

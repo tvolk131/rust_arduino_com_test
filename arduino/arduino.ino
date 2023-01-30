@@ -47,45 +47,45 @@ void loop() {
       Serial.println("{\"status\": \"ok\", \"command\": \"list_commands\", \"response\": [\"stepper0\", \"stepper1\", \"stepper2\", \"stepper3\", \"stepper4\", \"stepper5\", \"stepper6\", \"stepper7\", \"stepper8\", \"stepper9\", \"stepper10\", \"stepper11\", \"stepper12\"]}");
     } else if (command.equals("stepper0")) {
       stepper0.step(stepsPerRevolution);
-      Serial.println("{\"status\": \"ok\", \"command\": \"stepper0\"}");
+      Serial.println("{\"status\": \"ok\", \"command\": \"" + command + "\"}");
     } else if (command.equals("stepper1")) {
       stepper1.step(stepsPerRevolution);
-      Serial.println("{\"status\": \"ok\", \"command\": \"stepper1\"}");
+      Serial.println("{\"status\": \"ok\", \"command\": \"" + command + "\"}");
     } else if (command.equals("stepper2")) {
       stepper2.step(stepsPerRevolution);
-      Serial.println("{\"status\": \"ok\", \"command\": \"stepper2\"}");
+      Serial.println("{\"status\": \"ok\", \"command\": \"" + command + "\"}");
     } else if (command.equals("stepper3")) {
       stepper3.step(stepsPerRevolution);
-      Serial.println("{\"status\": \"ok\", \"command\": \"stepper3\"}");
+      Serial.println("{\"status\": \"ok\", \"command\": \"" + command + "\"}");
     } else if (command.equals("stepper4")) {
       stepper4.step(stepsPerRevolution);
-      Serial.println("{\"status\": \"ok\", \"command\": \"stepper4\"}");
+      Serial.println("{\"status\": \"ok\", \"command\": \"" + command + "\"}");
     } else if (command.equals("stepper5")) {
       stepper5.step(stepsPerRevolution);
-      Serial.println("{\"status\": \"ok\", \"command\": \"stepper5\"}");
+      Serial.println("{\"status\": \"ok\", \"command\": \"" + command + "\"}");
     } else if (command.equals("stepper6")) {
       stepper6.step(stepsPerRevolution);
-      Serial.println("{\"status\": \"ok\", \"command\": \"stepper6\"}");
+      Serial.println("{\"status\": \"ok\", \"command\": \"" + command + "\"}");
     } else if (command.equals("stepper7")) {
       stepper7.step(stepsPerRevolution);
-      Serial.println("{\"status\": \"ok\", \"command\": \"stepper7\"}");
+      Serial.println("{\"status\": \"ok\", \"command\": \"" + command + "\"}");
     } else if (command.equals("stepper8")) {
       stepper8.step(stepsPerRevolution);
-      Serial.println("{\"status\": \"ok\", \"command\": \"stepper8\"}");
+      Serial.println("{\"status\": \"ok\", \"command\": \"" + command + "\"}");
     } else if (command.equals("stepper9")) {
       stepper9.step(stepsPerRevolution);
-      Serial.println("{\"status\": \"ok\", \"command\": \"stepper9\"}");
+      Serial.println("{\"status\": \"ok\", \"command\": \"" + command + "\"}");
     } else if (command.equals("stepper10")) {
       stepper10.step(stepsPerRevolution);
-      Serial.println("{\"status\": \"ok\", \"command\": \"stepper10\"}");
+      Serial.println("{\"status\": \"ok\", \"command\": \"" + command + "\"}");
     } else if (command.equals("stepper11")) {
       stepper11.step(stepsPerRevolution);
-      Serial.println("{\"status\": \"ok\", \"command\": \"stepper11\"}");
+      Serial.println("{\"status\": \"ok\", \"command\": \"" + command + "\"}");
     } else if (command.equals("stepper12")) {
       stepper12.step(stepsPerRevolution);
-      Serial.println("{\"status\": \"ok\", \"command\": \"stepper12\"}");
+      Serial.println("{\"status\": \"ok\", \"command\": \"" + command + "\"}");
     } else {
-      Serial.println("{\"status\": \"error\", \"response\": \"unknown command: `" + command + "`\"}");
+      Serial.println("{\"status\": \"error\", \"command\": \"" + command + "\", \"response\": \"unknown command: `" + command + "`\"}");
     }
   }
 }
