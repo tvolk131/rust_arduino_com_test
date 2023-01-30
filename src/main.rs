@@ -1,11 +1,19 @@
-use std::{collections::HashMap};
+use std::{collections::HashMap, time::Duration};
 
-use serialport::{UsbPortInfo, SerialPortInfo};
+use serialport::{SerialPortInfo, SerialPortType, UsbPortInfo};
+
+mod call_response_serial_port;
+
+use call_response_serial_port::CallResponseSerialPort;
 
 fn main() {
     let mut connected_ports: HashMap<String, SerialPortInfo> = HashMap::new();
     loop {
-        let ports: HashMap<String, SerialPortInfo> = serialport::available_ports().unwrap().into_iter().map(|port| (port.port_name.clone(), port)).collect();
+        let ports: HashMap<String, SerialPortInfo> = serialport::available_ports()
+            .unwrap()
+            .into_iter()
+            .map(|port| (port.port_name.clone(), port))
+            .collect();
         let mut newly_connected_ports: Vec<SerialPortInfo> = Vec::new();
         for (_, port) in &ports {
             if !connected_ports.contains_key(&port.port_name) {
@@ -28,6 +36,43 @@ fn main() {
         if !newly_disconnected_ports.is_empty() {
             println!("Newly disconnected ports: {:#?}", newly_disconnected_ports);
         }
+
+        if !newly_connected_ports.is_empty() {
+            for port in &newly_connected_ports {
+                if let SerialPortType::UsbPort(usb_port_info) = &port.port_type {
+                    let board_type = get_board_type(&usb_port_info);
+                    if board_type == ArduinoBoardType::Mega2560 {
+                        println!("{:#?} plugged into {}", board_type, port.port_name);
+                        let port_builder = serialport::new(&port.port_name, 57600)
+                            .timeout(Duration::from_millis(1))
+                            .data_bits(serialport::DataBits::Eight);
+                        match port_builder.open() {
+                            Ok(port) => {
+                                println!(
+                                    "Opened port to {:?} on port {:?}",
+                                    board_type,
+                                    port.name().unwrap_or("unnamed device".to_string())
+                                );
+
+                                match CallResponseSerialPort::new(port) {
+                                    Ok(mut call_response_serial_port) => {
+                                        println!("{:?}", call_response_serial_port.get_commands());
+                                        for _ in 1..100 {
+                                            println!("{:?}", call_response_serial_port.execute_command("stepper0"));
+                                            println!("{:?}", call_response_serial_port.execute_command("stepper1"));
+                                        }
+                                    },
+                                    Err(err) => println!("Failed to open call-response serial communication channel: {:?}", err)
+                                };
+                            }
+                            Err(err) => {
+                                println!("Unable to open port to {:?}: {}", board_type, err)
+                            }
+                        };
+                    }
+                }
+            }
+        }
     }
 }
 
@@ -49,5 +94,5 @@ fn get_board_type(usb_port_info: &UsbPortInfo) -> ArduinoBoardType {
 #[derive(PartialEq, std::fmt::Debug)]
 enum ArduinoBoardType {
     Unknown,
-    Mega2560
+    Mega2560,
 }
