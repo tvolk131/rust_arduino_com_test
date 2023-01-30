@@ -80,7 +80,9 @@ impl CallResponseSerialPort {
                 return Ok(response.response);
             }
         }
-        return self.execute_command_give_up_after_timeout(command).map(|response| response.response);
+        return self
+            .execute_command_give_up_after_timeout(command)
+            .map(|response| response.response);
     }
 
     fn execute_command_give_up_after_timeout(
@@ -93,14 +95,16 @@ impl CallResponseSerialPort {
         }
         let num_bytes_available = match self.port.bytes_to_read() {
             Ok(num_bytes_available) => num_bytes_available,
-            Err(err) => return Err(SerialError::SerialPortError(err))
+            Err(err) => return Err(SerialError::SerialPortError(err)),
         };
         // Clear out any potential leftover bytes.
         if num_bytes_available > 0 {
-            if let Err(err) = self.port
-                .read(&mut buffer[..(num_bytes_available as usize)]) {
-                    return Err(SerialError::IoError(err));
-                }
+            if let Err(err) = self
+                .port
+                .read(&mut buffer[..(num_bytes_available as usize)])
+            {
+                return Err(SerialError::IoError(err));
+            }
         }
 
         for char in format!("{}\n", command).chars() {
@@ -123,7 +127,7 @@ impl CallResponseSerialPort {
             // TODO - The above call to `bytes_to_read` is very similar and both calls can probably be extracted into a helper of some kind.
             let num_bytes_available = match self.port.bytes_to_read() {
                 Ok(num_bytes_available) => num_bytes_available,
-                Err(err) => return Err(SerialError::SerialPortError(err))
+                Err(err) => return Err(SerialError::SerialPortError(err)),
             };
             if num_bytes_available > 0 {
                 let read_result = self
@@ -147,9 +151,9 @@ impl CallResponseSerialPort {
                             }
 
                             if response.command == command {
-                                return Ok(response)
+                                return Ok(response);
                             }
-                        },
+                        }
                         Err(_) => return Err(SerialError::MalformedResponse),
                     };
                 }
