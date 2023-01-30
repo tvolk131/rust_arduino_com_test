@@ -15,6 +15,8 @@ pub enum SerialError {
     Timeout,
     MalformedResponse,
     NonOkStatus,
+    IoError(std::io::Error),
+    SerialPortError(serialport::Error),
 }
 
 pub struct CallResponseSerialPort {
@@ -86,18 +88,28 @@ impl CallResponseSerialPort {
         command: &str,
     ) -> Result<ArduinoCommandResponse, SerialError> {
         let mut buffer = [0; 10000];
-        self.port.clear(serialport::ClearBuffer::All).unwrap();
-        let num_bytes_available = self.port.bytes_to_read().unwrap();
+        if let Err(err) = self.port.clear(serialport::ClearBuffer::All) {
+            return Err(SerialError::SerialPortError(err));
+        }
+        let num_bytes_available = match self.port.bytes_to_read() {
+            Ok(num_bytes_available) => num_bytes_available,
+            Err(err) => return Err(SerialError::SerialPortError(err))
+        };
         // Clear out any potential leftover bytes.
         if num_bytes_available > 0 {
-            self.port
-                .read(&mut buffer[..(num_bytes_available as usize)])
-                .unwrap();
+            if let Err(err) = self.port
+                .read(&mut buffer[..(num_bytes_available as usize)]) {
+                    return Err(SerialError::IoError(err));
+                }
         }
 
         for char in format!("{}\n", command).chars() {
-            self.port.write_all(format!("{}", char).as_bytes()).unwrap();
-            self.port.flush().unwrap();
+            if let Err(err) = self.port.write_all(format!("{}", char).as_bytes()) {
+                return Err(SerialError::IoError(err));
+            }
+            if let Err(err) = self.port.flush() {
+                return Err(SerialError::IoError(err));
+            }
             std::thread::sleep(Duration::from_millis(1));
         }
         self.wait_for_input(command)
@@ -108,7 +120,11 @@ impl CallResponseSerialPort {
         let mut buffer = [0; 10000];
         let mut stringified_buffer = String::new();
         loop {
-            let num_bytes_available = self.port.bytes_to_read().unwrap();
+            // TODO - The above call to `bytes_to_read` is very similar and both calls can probably be extracted into a helper of some kind.
+            let num_bytes_available = match self.port.bytes_to_read() {
+                Ok(num_bytes_available) => num_bytes_available,
+                Err(err) => return Err(SerialError::SerialPortError(err))
+            };
             if num_bytes_available > 0 {
                 let read_result = self
                     .port
@@ -141,7 +157,9 @@ impl CallResponseSerialPort {
             if std::time::Instant::now().duration_since(start_time) > self.timeout_to_retry {
                 return Err(SerialError::Timeout);
             }
-            self.port.clear(serialport::ClearBuffer::Output).unwrap();
+            if let Err(err) = self.port.clear(serialport::ClearBuffer::Output) {
+                return Err(SerialError::SerialPortError(err));
+            }
         }
     }
 }
