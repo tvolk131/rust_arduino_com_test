@@ -46,7 +46,7 @@ impl CallResponseSerialPort {
             Err(err) => return Err(err),
         };
 
-        let raw_command_values = match &response.response {
+        let raw_command_values = match &response {
             Some(res) => match res.as_array() {
                 Some(commands) => commands,
                 None => return Err(SerialError::MalformedResponse),
@@ -72,13 +72,13 @@ impl CallResponseSerialPort {
     pub fn execute_command(
         &mut self,
         command: &str,
-    ) -> Result<ArduinoCommandResponse, SerialError> {
+    ) -> Result<Option<serde_json::Value>, SerialError> {
         for _ in 0..self.max_retries {
             if let Ok(response) = self.execute_command_give_up_after_timeout(command) {
-                return Ok(response);
+                return Ok(response.response);
             }
         }
-        return self.execute_command_give_up_after_timeout(command);
+        return self.execute_command_give_up_after_timeout(command).map(|response| response.response);
     }
 
     fn execute_command_give_up_after_timeout(
