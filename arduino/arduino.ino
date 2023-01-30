@@ -1,3 +1,9 @@
+/*
+  Arduino Program that interfaces using LiVeACE (LightningVend Arduino Command Execution) protocol
+  to control up to 13 stepper motors. Currently only designed for and tested on an Arduino Mega.
+  TODO - Add compatibility for Uno and Leonardo.
+*/
+
 #include <Stepper.h>
 
 const int stepsPerRevolution = 200;
