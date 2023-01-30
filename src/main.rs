@@ -54,13 +54,17 @@ fn main() {
                                     port.name().unwrap_or("unnamed device".to_string())
                                 );
 
-                                let mut call_response_serial_port = CallResponseSerialPort::new(port);
-                                println!("{:?}", call_response_serial_port.get_commands());
-                                for _ in 1..100 {
-                                    println!("Calling execute_command(stepper0)...");
-                                    println!("Response to `execute_command(stepper0)`: {:?}", call_response_serial_port.execute_command("stepper0"));
-                                    std::thread::sleep(Duration::from_millis(1000));
-                                }
+                                match CallResponseSerialPort::new(port) {
+                                    Ok(mut call_response_serial_port) => {
+                                        println!("{:?}", call_response_serial_port.get_supported_commands());
+                                        for _ in 1..100 {
+                                            println!("Calling execute_command(stepper0)...");
+                                            println!("Response to `execute_command(stepper0)`: {:?}", call_response_serial_port.execute_command("stepper0"));
+                                            std::thread::sleep(Duration::from_millis(1000));
+                                        }
+                                    },
+                                    Err(err) => println!("Failed to open call-response serial communication channel: {:?}", err)
+                                };
                             }
                             Err(err) => {
                                 println!("Unable to open port to {:?}: {}", board_type, err)

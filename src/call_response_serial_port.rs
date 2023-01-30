@@ -1,4 +1,5 @@
 use serialport::SerialPort;
+use std::collections::HashSet;
 use std::io::{Read, Write};
 use std::time::Duration;
 
@@ -17,20 +18,28 @@ pub enum SerialError {
 
 pub struct CallResponseSerialPort {
     port: Box<dyn SerialPort>,
+    supported_commands: HashSet<String>,
     timeout_to_retry: Duration,
     max_retries: u32,
 }
 
 impl CallResponseSerialPort {
-    pub fn new(port: Box<dyn SerialPort>) -> Self {
-        Self {
+    pub fn new(port: Box<dyn SerialPort>) -> Result<Self, SerialError> {
+        let mut p = Self {
             port,
+            supported_commands: HashSet::new(),
             timeout_to_retry: Duration::from_millis(20000),
             max_retries: 10,
+        };
+
+        for command in p.get_commands()? {
+            p.supported_commands.insert(command);
         }
+
+        Ok(p)
     }
 
-    pub fn get_commands(&mut self) -> Result<Vec<String>, SerialError> {
+    fn get_commands(&mut self) -> Result<Vec<String>, SerialError> {
         let response = match self.execute_command("list_commands") {
             Ok(response) => response,
             Err(err) => return Err(err)
@@ -55,6 +64,10 @@ impl CallResponseSerialPort {
         }
 
         Ok(command_strings)
+    }
+
+    pub fn get_supported_commands(&self) -> &HashSet<String> {
+        &self.supported_commands
     }
 
     pub fn execute_command(&mut self, command: &str) -> Result<ArduinoCommandResponse, SerialError> {
